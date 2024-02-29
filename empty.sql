@@ -385,6 +385,10 @@ ALTER TABLE `squad`
 ALTER TABLE `squad_member`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+
+ALTER TABLE question RENAME COLUMN text TO description;
+ALTER TABLE question ADD COLUMN title VARCHAR(255);
+
 --
 -- AUTO_INCREMENT voor een tabel `user`
 --
