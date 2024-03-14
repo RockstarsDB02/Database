@@ -391,6 +391,7 @@ ALTER TABLE `squad_member`
 
 ALTER TABLE question RENAME COLUMN text TO description;
 ALTER TABLE question ADD COLUMN title VARCHAR(255);
+ALTER TABLE answer ADD COLUMN flagged BOOLEAN DEFAULT FALSE;
 
 --
 -- AUTO_INCREMENT voor een tabel `user`
