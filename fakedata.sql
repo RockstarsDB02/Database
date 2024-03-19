@@ -25,7 +25,7 @@ DELIMITER $$
 --
 -- Procedures
 --
-CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateQuestionnaireVersionStatus` (IN `input_version_id` INT)   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateHealthCheckVersionStatus` (IN `input_version_id` INT)   BEGIN
     DECLARE v_invitations_count INT;
 
     SELECT COUNT(*) INTO v_invitations_count
@@ -33,11 +33,11 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateQuestionnaireVersionStatus` (
     WHERE `version_id` = input_version_id;
 
     IF v_invitations_count > 0 THEN
-        UPDATE `questionnaire_version`
+        UPDATE `healthcheck_version`
         SET `isActive` = 1
         WHERE `version_id` = input_version_id;
     ELSE
-        UPDATE `questionnaire_version`
+        UPDATE `healthcheck_version`
         SET `isActive` = 0
         WHERE `version_id` = input_version_id;
     END IF;
@@ -1160,7 +1160,7 @@ INSERT INTO `company_squad` (`id`, `company_id`, `squad_id`, `createdAt`) VALUES
 
 CREATE TABLE `invitation_link` (
   `id` int(11) NOT NULL,
-  `questionnaire_id` int(11) DEFAULT NULL,
+  `healthcheck_id` int(11) DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
   `uniqueLink` varchar(255) DEFAULT NULL,
   `isUsed` tinyint(1) DEFAULT 0,
@@ -1172,7 +1172,7 @@ CREATE TABLE `invitation_link` (
 -- Gegevens worden geëxporteerd voor tabel `invitation_link`
 --
 
-INSERT INTO `invitation_link` (`id`, `questionnaire_id`, `user_id`, `uniqueLink`, `isUsed`, `expiresAt`, `version_id`) VALUES
+INSERT INTO `invitation_link` (`id`, `healthcheck_id`, `user_id`, `uniqueLink`, `isUsed`, `expiresAt`, `version_id`) VALUES
 (1, 7, 43, 'd16f2cdb-9212-4432-9d18-faa9c2094655', 0, '2024-12-22 01:07:17', 7),
 (2, 10, 25, 'e497c018-65cb-4336-9c89-78c412471c7d', 0, '2024-03-29 08:56:40', 10),
 (3, 7, 38, 'f6bc64f7-f21b-4e8c-9445-39c55ed57bbe', 0, '2024-03-03 09:29:45', 7),
@@ -1198,22 +1198,22 @@ INSERT INTO `invitation_link` (`id`, `questionnaire_id`, `user_id`, `uniqueLink`
 -- Triggers `invitation_link`
 --
 DELIMITER $$
-CREATE TRIGGER `activate_questionnaire_after_invitation_insert` AFTER INSERT ON `invitation_link` FOR EACH ROW BEGIN
-    CALL UpdateQuestionnaireVersionStatus(NEW.version_id);
+CREATE TRIGGER `activate_healthcheck_after_invitation_insert` AFTER INSERT ON `invitation_link` FOR EACH ROW BEGIN
+    CALL UpdateHealthCheckVersionStatus(NEW.version_id);
 END
 $$
 DELIMITER ;
 DELIMITER $$
-CREATE TRIGGER `update_questionnaire_version_status_after_invitation_delete` AFTER DELETE ON `invitation_link` FOR EACH ROW BEGIN
-    CALL UpdateQuestionnaireVersionStatus(OLD.version_id);
+CREATE TRIGGER `update_healthcheck_version_status_after_invitation_delete` AFTER DELETE ON `invitation_link` FOR EACH ROW BEGIN
+    CALL UpdateHealthCheckVersionStatus(OLD.version_id);
 END
 $$
 DELIMITER ;
 DELIMITER $$
-CREATE TRIGGER `update_questionnaire_version_status_after_invitation_update` AFTER UPDATE ON `invitation_link` FOR EACH ROW BEGIN
+CREATE TRIGGER `update_healthcheck_version_status_after_invitation_update` AFTER UPDATE ON `invitation_link` FOR EACH ROW BEGIN
     IF OLD.version_id != NEW.version_id THEN
-        CALL UpdateQuestionnaireVersionStatus(OLD.version_id);
-        CALL UpdateQuestionnaireVersionStatus(NEW.version_id);
+        CALL UpdateHealthCheckVersionStatus(OLD.version_id);
+        CALL UpdateHealthCheckVersionStatus(NEW.version_id);
     END IF;
 END
 $$
@@ -1227,7 +1227,7 @@ DELIMITER ;
 
 CREATE TABLE `question` (
   `id` int(11) NOT NULL,
-  `questionnaire_id` int(11) DEFAULT NULL,
+  `healthcheck_id` int(11) DEFAULT NULL,
   `priority` int(11) DEFAULT 0,
   `text` text DEFAULT NULL,
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -1238,7 +1238,7 @@ CREATE TABLE `question` (
 -- Gegevens worden geëxporteerd voor tabel `question`
 --
 
-INSERT INTO `question` (`id`, `questionnaire_id`, `priority`, `text`, `createdAt`, `version_id`) VALUES
+INSERT INTO `question` (`id`, `healthcheck_id`, `priority`, `text`, `createdAt`, `version_id`) VALUES
 (1, 1, 0, 'Approbo conscendo antea suggero iusto.', '2024-02-28 21:08:21', 1),
 (2, 1, 0, 'Veniam triumphus vulgaris dedecor nihil pel color.', '2024-02-28 21:08:21', 1),
 (3, 1, 0, 'Aranea antiquus sublime.', '2024-02-28 21:08:21', 1),
@@ -1544,16 +1544,16 @@ INSERT INTO `question` (`id`, `questionnaire_id`, `priority`, `text`, `createdAt
 -- Triggers `question`
 --
 DELIMITER $$
-CREATE TRIGGER `prevent_question_change_if_questionnaire_version_active` BEFORE UPDATE ON `question` FOR EACH ROW BEGIN
-    DECLARE v_questionnaire_status TINYINT;
+CREATE TRIGGER `prevent_question_change_if_healthcheck_version_active` BEFORE UPDATE ON `question` FOR EACH ROW BEGIN
+    DECLARE v_healthcheck_status TINYINT;
 
-    SELECT isActive INTO v_questionnaire_status
-    FROM `questionnaire_version`
+    SELECT isActive INTO v_healthcheck_status
+    FROM `healthcheck_version`
     WHERE `version_id` = OLD.version_id;
 
-    IF v_questionnaire_status = 1 THEN
+    IF v_healthcheck_status = 1 THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Cannot update question when questionnaire version is active';
+        SET MESSAGE_TEXT = 'Cannot update question when healthcheck version is active';
     END IF;
 END
 $$
@@ -1562,10 +1562,10 @@ DELIMITER ;
 -- --------------------------------------------------------
 
 --
--- Tabelstructuur voor tabel `questionnaire`
+-- Tabelstructuur voor tabel `healthcheck`
 --
 
-CREATE TABLE `questionnaire` (
+CREATE TABLE `healthcheck` (
   `id` int(11) NOT NULL,
   `title` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
@@ -1574,10 +1574,10 @@ CREATE TABLE `questionnaire` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Gegevens worden geëxporteerd voor tabel `questionnaire`
+-- Gegevens worden geëxporteerd voor tabel `healthcheck`
 --
 
-INSERT INTO `questionnaire` (`id`, `title`, `description`, `manager_id`, `createdAt`) VALUES
+INSERT INTO `healthcheck` (`id`, `title`, `description`, `manager_id`, `createdAt`) VALUES
 (1, 'defero urbanus comparo', 'Conicio voluptatibus defetiscor uredo ulterius natus. Asperiores ventus ancilla arceo depono porro. Ater tabernus comminor velociter quaerat. Basium ullus amet beneficium articulus.', 29, '2024-02-28 21:08:21'),
 (2, 'clamo paens demum', 'Voluptas tametsi depromo cunctatio id enim concedo somnus. Verus facere dolores volva vir surculus adamo. Vergo uxor vos tollo aegre excepturi.', 17, '2024-02-28 21:08:21'),
 (3, 'sordeo amita ater', 'Alias crux auctus. Vere amoveo combibo termes vacuus celer tergeo. Saepe cultellus villa facere. Pariatur dedico tempus depopulo strues.', 35, '2024-02-28 21:08:21'),
@@ -1597,12 +1597,12 @@ INSERT INTO `questionnaire` (`id`, `title`, `description`, `manager_id`, `create
 -- --------------------------------------------------------
 
 --
--- Tabelstructuur voor tabel `questionnaire_version`
+-- Tabelstructuur voor tabel `healthcheck_version`
 --
 
-CREATE TABLE `questionnaire_version` (
+CREATE TABLE `healthcheck_version` (
   `version_id` int(11) NOT NULL,
-  `questionnaire_id` int(11) DEFAULT NULL,
+  `healthcheck_id` int(11) DEFAULT NULL,
   `version_number` int(11) DEFAULT NULL,
   `creation_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `notes` text DEFAULT NULL,
@@ -1610,10 +1610,10 @@ CREATE TABLE `questionnaire_version` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Gegevens worden geëxporteerd voor tabel `questionnaire_version`
+-- Gegevens worden geëxporteerd voor tabel `healthcheck_version`
 --
 
-INSERT INTO `questionnaire_version` (`version_id`, `questionnaire_id`, `version_number`, `creation_date`, `notes`, `isActive`) VALUES
+INSERT INTO `healthcheck_version` (`version_id`, `healthcheck_id`, `version_number`, `creation_date`, `notes`, `isActive`) VALUES
 (1, 1, 1, '2024-02-28 21:08:21', 'Adeo acervus corona surgo valeo curatio. Curso aequus modi audentia decumbo in. Peior xiphias demens crur minima synagoga subnecto tepesco. Annus theologus demoror substantia. Soluta victus claustrum. Bellicus ait suadeo.', 1),
 (2, 2, 3, '2024-02-28 21:08:21', 'Voluptatum aut atque cilicium. Suggero quasi arbitro somniculosus. Tantillus circumvenio depono sit adeptio aggero vacuus cupiditate tabella.', 1),
 (3, 3, 1, '2024-02-28 21:08:21', 'Centum aro decor ulciscor coniecto comparo consequatur audio. Reiciendis bardus suscipio alioqui iste arbitro cribro vulticulus. Volubilis terga statim arcus. Complectus accommodo tenus maxime denuo. Cursim nulla caries perspiciatis sonitus circumvenio sto cuius.', 0),
@@ -1714,20 +1714,20 @@ INSERT INTO `squad_member` (`id`, `user_id`, `squad_id`) VALUES
 -- --------------------------------------------------------
 
 --
--- Tabelstructuur voor tabel `squad_questionnaire`
+-- Tabelstructuur voor tabel `squad_healthcheck`
 --
 
-CREATE TABLE `squad_questionnaire` (
+CREATE TABLE `squad_healthcheck` (
   `id` int(11) NOT NULL,
   `squad_id` int(11) DEFAULT NULL,
-  `questionnaire_id` int(11) DEFAULT NULL
+  `healthcheck_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Gegevens worden geëxporteerd voor tabel `squad_questionnaire`
+-- Gegevens worden geëxporteerd voor tabel `squad_healthcheck`
 --
 
-INSERT INTO `squad_questionnaire` (`id`, `squad_id`, `questionnaire_id`) VALUES
+INSERT INTO `squad_healthcheck` (`id`, `squad_id`, `healthcheck_id`) VALUES
 (1, 15, 4),
 (2, 9, 3),
 (3, 20, 13),
@@ -1851,7 +1851,7 @@ ALTER TABLE `company_squad`
 --
 ALTER TABLE `invitation_link`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `questionnaire_id` (`questionnaire_id`),
+  ADD KEY `healthcheck_id` (`healthcheck_id`),
   ADD KEY `user_id` (`user_id`),
   ADD KEY `version_id` (`version_id`);
 
@@ -1860,22 +1860,22 @@ ALTER TABLE `invitation_link`
 --
 ALTER TABLE `question`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `questionnaire_id` (`questionnaire_id`),
+  ADD KEY `healthcheck_id` (`healthcheck_id`),
   ADD KEY `version_id` (`version_id`);
 
 --
--- Indexen voor tabel `questionnaire`
+-- Indexen voor tabel `healthcheck`
 --
-ALTER TABLE `questionnaire`
+ALTER TABLE `healthcheck`
   ADD PRIMARY KEY (`id`),
   ADD KEY `manager_id` (`manager_id`);
 
 --
--- Indexen voor tabel `questionnaire_version`
+-- Indexen voor tabel `healthcheck_version`
 --
-ALTER TABLE `questionnaire_version`
+ALTER TABLE `healthcheck_version`
   ADD PRIMARY KEY (`version_id`),
-  ADD KEY `questionnaire_id` (`questionnaire_id`);
+  ADD KEY `healthcheck_id` (`healthcheck_id`);
 
 --
 -- Indexen voor tabel `squad`
@@ -1892,12 +1892,12 @@ ALTER TABLE `squad_member`
   ADD KEY `user_id` (`user_id`);
 
 --
--- Indexen voor tabel `squad_questionnaire`
+-- Indexen voor tabel `squad_healthcheck`
 --
-ALTER TABLE `squad_questionnaire`
+ALTER TABLE `squad_healthcheck`
   ADD PRIMARY KEY (`id`),
   ADD KEY `squad_id` (`squad_id`),
-  ADD KEY `questionnaire_id` (`questionnaire_id`);
+  ADD KEY `healthcheck_id` (`healthcheck_id`);
 
 --
 -- Indexen voor tabel `user`
@@ -1940,15 +1940,15 @@ ALTER TABLE `question`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=301;
 
 --
--- AUTO_INCREMENT voor een tabel `questionnaire`
+-- AUTO_INCREMENT voor een tabel `healthcheck`
 --
-ALTER TABLE `questionnaire`
+ALTER TABLE `healthcheck`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
--- AUTO_INCREMENT voor een tabel `questionnaire_version`
+-- AUTO_INCREMENT voor een tabel `healthcheck_version`
 --
-ALTER TABLE `questionnaire_version`
+ALTER TABLE `healthcheck_version`
   MODIFY `version_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --

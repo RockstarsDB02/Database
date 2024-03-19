@@ -28,7 +28,7 @@ DELIMITER $$
 --
 -- Procedures
 --
-CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateQuestionnaireVersionStatus` (IN `input_version_id` INT)   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateHealthCheckVersionStatus` (IN `input_version_id` INT)   BEGIN
     DECLARE v_invitations_count INT;
 
     SELECT COUNT(*) INTO v_invitations_count
@@ -36,11 +36,11 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateQuestionnaireVersionStatus` (
     WHERE `version_id` = input_version_id;
 
     IF v_invitations_count > 0 THEN
-        UPDATE `questionnaire_version`
+        UPDATE `healthcheck_version`
         SET `isActive` = 1
         WHERE `version_id` = input_version_id;
     ELSE
-        UPDATE `questionnaire_version`
+        UPDATE `healthcheck_version`
         SET `isActive` = 0
         WHERE `version_id` = input_version_id;
     END IF;
@@ -98,7 +98,7 @@ CREATE TABLE `company_squad` (
 
 CREATE TABLE `invitation_link` (
   `id` int(11) NOT NULL,
-  `questionnaire_id` int(11) DEFAULT NULL,
+  `healthcheck_id` int(11) DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
   `uniqueLink` varchar(255) DEFAULT NULL,
   `isUsed` tinyint(1) DEFAULT 0,
@@ -110,22 +110,22 @@ CREATE TABLE `invitation_link` (
 -- Triggers `invitation_link`
 --
 DELIMITER $$
-CREATE TRIGGER `activate_questionnaire_after_invitation_insert` AFTER INSERT ON `invitation_link` FOR EACH ROW BEGIN
-    CALL UpdateQuestionnaireVersionStatus(NEW.version_id);
+CREATE TRIGGER `activate_healthcheck_after_invitation_insert` AFTER INSERT ON `invitation_link` FOR EACH ROW BEGIN
+    CALL UpdateHealthCheckVersionStatus(NEW.version_id);
 END
 $$
 DELIMITER ;
 DELIMITER $$
-CREATE TRIGGER `update_questionnaire_version_status_after_invitation_delete` AFTER DELETE ON `invitation_link` FOR EACH ROW BEGIN
-    CALL UpdateQuestionnaireVersionStatus(OLD.version_id);
+CREATE TRIGGER `update_healthcheck_version_status_after_invitation_delete` AFTER DELETE ON `invitation_link` FOR EACH ROW BEGIN
+    CALL UpdateHealthCheckVersionStatus(OLD.version_id);
 END
 $$
 DELIMITER ;
 DELIMITER $$
-CREATE TRIGGER `update_questionnaire_version_status_after_invitation_update` AFTER UPDATE ON `invitation_link` FOR EACH ROW BEGIN
+CREATE TRIGGER `update_healthcheck_version_status_after_invitation_update` AFTER UPDATE ON `invitation_link` FOR EACH ROW BEGIN
     IF OLD.version_id != NEW.version_id THEN
-        CALL UpdateQuestionnaireVersionStatus(OLD.version_id);
-        CALL UpdateQuestionnaireVersionStatus(NEW.version_id);
+        CALL UpdateHealthCheckVersionStatus(OLD.version_id);
+        CALL UpdateHealthCheckVersionStatus(NEW.version_id);
     END IF;
 END
 $$
@@ -139,7 +139,7 @@ DELIMITER ;
 
 CREATE TABLE `question` (
   `id` int(11) NOT NULL,
-  `questionnaire_id` int(11) DEFAULT NULL,
+  `healthcheck_id` int(11) DEFAULT NULL,
   `priority` int(11) DEFAULT 0,
   `text` text DEFAULT NULL,
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -150,16 +150,16 @@ CREATE TABLE `question` (
 -- Triggers `question`
 --
 DELIMITER $$
-CREATE TRIGGER `prevent_question_change_if_questionnaire_version_active` BEFORE UPDATE ON `question` FOR EACH ROW BEGIN
-    DECLARE v_questionnaire_status TINYINT;
+CREATE TRIGGER `prevent_question_change_if_healthcheck_version_active` BEFORE UPDATE ON `question` FOR EACH ROW BEGIN
+    DECLARE v_healthcheck_status TINYINT;
 
-    SELECT isActive INTO v_questionnaire_status
-    FROM `questionnaire_version`
+    SELECT isActive INTO v_healthcheck_status
+    FROM `healthcheck_version`
     WHERE `version_id` = OLD.version_id;
 
-    IF v_questionnaire_status = 1 THEN
+    IF v_healthcheck_status = 1 THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Cannot update question when questionnaire version is active';
+        SET MESSAGE_TEXT = 'Cannot update question when healthcheck version is active';
     END IF;
 END
 $$
@@ -168,10 +168,10 @@ DELIMITER ;
 -- --------------------------------------------------------
 
 --
--- Tabelstructuur voor tabel `questionnaire`
+-- Tabelstructuur voor tabel `healthcheck`
 --
 
-CREATE TABLE `questionnaire` (
+CREATE TABLE `healthcheck` (
   `id` int(11) NOT NULL,
   `title` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
@@ -182,12 +182,12 @@ CREATE TABLE `questionnaire` (
 -- --------------------------------------------------------
 
 --
--- Tabelstructuur voor tabel `questionnaire_version`
+-- Tabelstructuur voor tabel `healthcheck_version`
 --
 
-CREATE TABLE `questionnaire_version` (
+CREATE TABLE `healthcheck_version` (
   `version_id` int(11) NOT NULL,
-  `questionnaire_id` int(11) DEFAULT NULL,
+  `healthcheck_id` int(11) DEFAULT NULL,
   `version_number` int(11) DEFAULT NULL,
   `creation_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `notes` text DEFAULT NULL,
@@ -221,13 +221,13 @@ CREATE TABLE `squad_member` (
 -- --------------------------------------------------------
 
 --
--- Tabelstructuur voor tabel `squad_questionnaire`
+-- Tabelstructuur voor tabel `squad_healthcheck`
 --
 
-CREATE TABLE `squad_questionnaire` (
+CREATE TABLE `squad_healthcheck` (
   `id` int(11) NOT NULL,
   `squad_id` int(11) DEFAULT NULL,
-  `questionnaire_id` int(11) DEFAULT NULL
+  `healthcheck_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -276,7 +276,7 @@ ALTER TABLE `company_squad`
 --
 ALTER TABLE `invitation_link`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `questionnaire_id` (`questionnaire_id`),
+  ADD KEY `healthcheck_id` (`healthcheck_id`),
   ADD KEY `user_id` (`user_id`),
   ADD KEY `version_id` (`version_id`);
 
@@ -285,22 +285,22 @@ ALTER TABLE `invitation_link`
 --
 ALTER TABLE `question`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `questionnaire_id` (`questionnaire_id`),
+  ADD KEY `healthcheck_id` (`healthcheck_id`),
   ADD KEY `version_id` (`version_id`);
 
 --
--- Indexen voor tabel `questionnaire`
+-- Indexen voor tabel `healthcheck`
 --
-ALTER TABLE `questionnaire`
+ALTER TABLE `healthcheck`
   ADD PRIMARY KEY (`id`),
   ADD KEY `manager_id` (`manager_id`);
 
 --
--- Indexen voor tabel `questionnaire_version`
+-- Indexen voor tabel `healthcheck_version`
 --
-ALTER TABLE `questionnaire_version`
+ALTER TABLE `healthcheck_version`
   ADD PRIMARY KEY (`version_id`),
-  ADD KEY `questionnaire_id` (`questionnaire_id`);
+  ADD KEY `healthcheck_id` (`healthcheck_id`);
 
 --
 -- Indexen voor tabel `squad`
@@ -317,12 +317,12 @@ ALTER TABLE `squad_member`
   ADD KEY `user_id` (`user_id`);
 
 --
--- Indexen voor tabel `squad_questionnaire`
+-- Indexen voor tabel `squad_healthcheck`
 --
-ALTER TABLE `squad_questionnaire`
+ALTER TABLE `squad_healthcheck`
   ADD PRIMARY KEY (`id`),
   ADD KEY `squad_id` (`squad_id`),
-  ADD KEY `questionnaire_id` (`questionnaire_id`);
+  ADD KEY `healthcheck_id` (`healthcheck_id`);
 
 --
 -- Indexen voor tabel `user`
@@ -365,15 +365,15 @@ ALTER TABLE `question`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT voor een tabel `questionnaire`
+-- AUTO_INCREMENT voor een tabel `healthcheck`
 --
-ALTER TABLE `questionnaire`
+ALTER TABLE `healthcheck`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT voor een tabel `questionnaire_version`
+-- AUTO_INCREMENT voor een tabel `healthcheck_version`
 --
-ALTER TABLE `questionnaire_version`
+ALTER TABLE `healthcheck_version`
   MODIFY `version_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
