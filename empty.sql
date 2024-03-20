@@ -17,9 +17,6 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
-CREATE DATABASE IF NOT EXISTS squadhealth;
-USE squadhealth;
-
 --
 -- Database: `squadhealth`
 --
@@ -59,6 +56,7 @@ CREATE TABLE `answer` (
   `question_id` int(11) DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
   `answerColor` enum('Red','Yellow','Green') DEFAULT NULL,
+  `category_id` int(11) DEFAULT NULL,
   `comment` text DEFAULT NULL,
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `version_id` int(11) DEFAULT NULL
@@ -244,6 +242,14 @@ CREATE TABLE `user` (
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+
+-- Categories for answers
+
+CREATE TABLE `answer_category` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Indexen voor geëxporteerde tabellen
 --
@@ -392,6 +398,27 @@ ALTER TABLE `squad_member`
 ALTER TABLE question RENAME COLUMN text TO description;
 ALTER TABLE question ADD COLUMN title VARCHAR(255);
 ALTER TABLE answer ADD COLUMN flagged BOOLEAN DEFAULT FALSE;
+
+-- Relationele integriteit
+ALTER TABLE answer ADD CONSTRAINT fk_answer_question FOREIGN KEY (question_id) REFERENCES question(id) ON DELETE SET NULL;
+ALTER TABLE answer ADD CONSTRAINT fk_answer_user FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE;
+ALTER TABLE answer ADD CONSTRAINT fk_answer_version FOREIGN KEY (version_id) REFERENCES healthcheck_version(version_id) ON DELETE CASCADE;
+
+ALTER TABLE company_squad ADD CONSTRAINT fk_company_squad_company FOREIGN KEY (company_id) REFERENCES company(id) ON DELETE SET NULL;
+ALTER TABLE company_squad ADD CONSTRAINT fk_company_squad_squad FOREIGN KEY (squad_id) REFERENCES squad(id) ON DELETE SET NULL;
+
+ALTER TABLE invitation_link ADD CONSTRAINT fk_invitation_link_healthcheck FOREIGN KEY (healthcheck_id) REFERENCES healthcheck(id) ON DELETE CASCADE;
+ALTER TABLE invitation_link ADD CONSTRAINT fk_invitation_link_user FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE;
+ALTER TABLE invitation_link ADD CONSTRAINT fk_invitation_link_version FOREIGN KEY (version_id) REFERENCES healthcheck_version(version_id) ON DELETE CASCADE;
+
+ALTER TABLE question ADD CONSTRAINT fk_question_healthcheck FOREIGN KEY (healthcheck_id) REFERENCES healthcheck(id) ON DELETE SET NULL;
+ALTER TABLE question ADD CONSTRAINT fk_question_version FOREIGN KEY (version_id) REFERENCES healthcheck_version(version_id) ON DELETE CASCADE;
+
+ALTER TABLE squad_member ADD CONSTRAINT fk_squad_member_user FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE;
+ALTER TABLE squad_member ADD CONSTRAINT fk_squad_member_squad FOREIGN KEY (squad_id) REFERENCES squad(id) ON DELETE CASCADE;
+
+ALTER TABLE squad_healthcheck ADD CONSTRAINT fk_squad_healthcheck_squad FOREIGN KEY (squad_id) REFERENCES squad(id) ON DELETE CASCADE;
+ALTER TABLE squad_healthcheck ADD CONSTRAINT fk_squad_healthcheck_healthcheck FOREIGN KEY (healthcheck_id) REFERENCES healthcheck(id) ON DELETE CASCADE;
 
 --
 -- AUTO_INCREMENT voor een tabel `user`
