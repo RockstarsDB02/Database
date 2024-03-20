@@ -56,7 +56,6 @@ CREATE TABLE `answer` (
   `question_id` int(11) DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
   `answerColor` enum('Red','Yellow','Green') DEFAULT NULL,
-  `category_id` int(11) DEFAULT NULL,
   `comment` text DEFAULT NULL,
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `version_id` int(11) DEFAULT NULL
@@ -138,6 +137,7 @@ DELIMITER ;
 CREATE TABLE `question` (
   `id` int(11) NOT NULL,
   `healthcheck_id` int(11) DEFAULT NULL,
+  `category_id` int(11) DEFAULT NULL,
   `priority` int(11) DEFAULT 0,
   `text` text DEFAULT NULL,
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -243,9 +243,9 @@ CREATE TABLE `user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- Categories for answers
+-- Categories for questions
 
-CREATE TABLE `answer_category` (
+CREATE TABLE `question_category` (
   `id` int(11) NOT NULL,
   `name` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -419,6 +419,9 @@ ALTER TABLE squad_member ADD CONSTRAINT fk_squad_member_squad FOREIGN KEY (squad
 
 ALTER TABLE squad_healthcheck ADD CONSTRAINT fk_squad_healthcheck_squad FOREIGN KEY (squad_id) REFERENCES squad(id) ON DELETE CASCADE;
 ALTER TABLE squad_healthcheck ADD CONSTRAINT fk_squad_healthcheck_healthcheck FOREIGN KEY (healthcheck_id) REFERENCES healthcheck(id) ON DELETE CASCADE;
+
+-- Category id relation constraint
+ALTER TABLE question ADD CONSTRAINT fk_question_category FOREIGN KEY (category_id) REFERENCES question_category(id) ON DELETE SET NULL;
 
 --
 -- AUTO_INCREMENT voor een tabel `user`
