@@ -421,6 +421,7 @@ ALTER TABLE squad_healthcheck ADD CONSTRAINT fk_squad_healthcheck_squad FOREIGN 
 ALTER TABLE squad_healthcheck ADD CONSTRAINT fk_squad_healthcheck_healthcheck FOREIGN KEY (healthcheck_id) REFERENCES healthcheck(id) ON DELETE CASCADE;
 
 -- Category id relation constraint
+CREATE INDEX idx_question_category_id ON question_category(id);
 ALTER TABLE question ADD CONSTRAINT fk_question_category FOREIGN KEY (category_id) REFERENCES question_category(id) ON DELETE SET NULL;
 
 --
