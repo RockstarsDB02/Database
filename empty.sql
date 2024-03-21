@@ -246,7 +246,7 @@ CREATE TABLE `user` (
 -- Categories for questions
 
 CREATE TABLE `question_category` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -394,8 +394,15 @@ ALTER TABLE `squad`
 ALTER TABLE `squad_member`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- AUTO_INCREMENT voor een tabel `user`
+--
+ALTER TABLE `user`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+COMMIT;
 
-ALTER TABLE question RENAME COLUMN text TO description;
+
+ALTER TABLE question CHANGE COLUMN text description TEXT;
 ALTER TABLE question ADD COLUMN title VARCHAR(255);
 ALTER TABLE answer ADD COLUMN flagged BOOLEAN DEFAULT FALSE;
 
@@ -424,12 +431,7 @@ ALTER TABLE squad_healthcheck ADD CONSTRAINT fk_squad_healthcheck_healthcheck FO
 CREATE INDEX idx_question_category_id ON question_category(id);
 ALTER TABLE question ADD CONSTRAINT fk_question_category FOREIGN KEY (category_id) REFERENCES question_category(id) ON DELETE SET NULL;
 
---
--- AUTO_INCREMENT voor een tabel `user`
---
-ALTER TABLE `user`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-COMMIT;
+
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
