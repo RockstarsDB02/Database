@@ -58,6 +58,7 @@ CREATE TABLE `answer` (
   `answerColor` enum('Red','Yellow','Green') DEFAULT NULL,
   `comment` text DEFAULT NULL,
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `flagged` BOOLEAN DEFAULT FALSE;
   `version_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -189,7 +190,7 @@ CREATE TABLE `healthcheck_version` (
   `version_number` int(11) DEFAULT NULL,
   `creation_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `notes` text DEFAULT NULL,
-  `isActive` tinyint(4) DEFAULT 0
+  `isActive` tinyint(4) DEFAULT 0,
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -236,7 +237,8 @@ CREATE TABLE `squad_healthcheck` (
 
 CREATE TABLE `user` (
   `id` int(11) NOT NULL,
-  `email` varchar(255) DEFAULT NULL,
+  `email` varchar(255) NOT NULL,
+  `name` varchar(255) DEFAULT NULL,
   `passwordHash` varchar(255) DEFAULT NULL,
   `role` enum('Manager','Developer') DEFAULT 'Developer',
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
