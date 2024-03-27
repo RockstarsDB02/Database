@@ -58,8 +58,9 @@ CREATE TABLE `answer` (
   `answerColor` enum('Red','Yellow','Green') DEFAULT NULL,
   `comment` text DEFAULT NULL,
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `flagged` BOOLEAN DEFAULT FALSE;
-  `version_id` int(11) DEFAULT NULL
+  `flagged` BOOLEAN DEFAULT FALSE,
+  `version_id` int(11) DEFAULT NULL,
+  `squad_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -101,9 +102,9 @@ CREATE TABLE `invitation_link` (
   `uniqueLink` varchar(255) DEFAULT NULL,
   `isUsed` tinyint(1) DEFAULT 0,
   `expiresAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `version_id` int(11) DEFAULT NULL
+  `version_id` int(11) DEFAULT NULL,
+  `squad_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 --
 -- Triggers `invitation_link`
 --
@@ -190,9 +191,8 @@ CREATE TABLE `healthcheck_version` (
   `version_number` int(11) DEFAULT NULL,
   `creation_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `notes` text DEFAULT NULL,
-  `isActive` tinyint(4) DEFAULT 0,
+  `isActive` tinyint(4) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 -- --------------------------------------------------------
 
 --
@@ -263,7 +263,9 @@ ALTER TABLE `answer`
   ADD PRIMARY KEY (`id`),
   ADD KEY `question_id` (`question_id`),
   ADD KEY `user_id` (`user_id`),
-  ADD KEY `version_id` (`version_id`);
+  ADD KEY `version_id` (`version_id`),
+  ADD KEY `squad_id` (`squad_id`);
+  
 
 --
 -- Indexen voor tabel `company`
@@ -286,7 +288,8 @@ ALTER TABLE `invitation_link`
   ADD PRIMARY KEY (`id`),
   ADD KEY `healthcheck_id` (`healthcheck_id`),
   ADD KEY `user_id` (`user_id`),
-  ADD KEY `version_id` (`version_id`);
+  ADD KEY `version_id` (`version_id`),
+  ADD KEY `squad_id` (`squad_id`);
 
 --
 -- Indexen voor tabel `question`
@@ -406,7 +409,6 @@ COMMIT;
 
 ALTER TABLE question CHANGE COLUMN text description TEXT;
 ALTER TABLE question ADD COLUMN title VARCHAR(255);
-ALTER TABLE answer ADD COLUMN flagged BOOLEAN DEFAULT FALSE;
 
 -- Relationele integriteit
 ALTER TABLE answer ADD CONSTRAINT fk_answer_question FOREIGN KEY (question_id) REFERENCES question(id) ON DELETE SET NULL;
@@ -433,6 +435,9 @@ ALTER TABLE squad_healthcheck ADD CONSTRAINT fk_squad_healthcheck_healthcheck FO
 CREATE INDEX idx_question_category_id ON question_category(id);
 ALTER TABLE question ADD CONSTRAINT fk_question_category FOREIGN KEY (category_id) REFERENCES question_category(id) ON DELETE SET NULL;
 
+
+ALTER TABLE answer ADD CONSTRAINT fk_answer_squad FOREIGN KEY (squad_id) REFERENCES squad(id) ON DELETE SET NULL;
+ALTER TABLE invitation_link ADD CONSTRAINT fk_invitation_link_squad FOREIGN KEY (squad_id) REFERENCES squad(id) ON DELETE SET NULL;
 
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
