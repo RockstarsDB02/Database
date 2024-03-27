@@ -1,0 +1,99 @@
+Project squadhealth {
+}
+
+// Define tables
+Table answer {
+  id int [pk, not null]
+  question_id int [null, ref: > question.id]
+  user_id int [null, ref: > user.id]
+  answerColor enum('Red', 'Yellow', 'Green') [null]
+  comment text [null]
+  createdAt timestamp [not null, default: `current_timestamp()`]
+  flagged BOOLEAN [default: false, not null]
+  version_id int [null, ref: > healthcheck_version.version_id]
+  squad_id int [null, ref: > squad.id] // Toegevoegd
+}
+
+Table company {
+  id int [pk, not null]
+  name varchar(255) [null]
+  location varchar(255) [null]
+  logo varchar(255) [null]
+}
+
+Table company_squad {
+  id int [pk, not null]
+  company_id int [null, ref: > company.id]
+  squad_id int [null, ref: > squad.id]
+  createdAt timestamp [not null, default: `current_timestamp()`]
+}
+
+Table invitation_link {
+  id int [pk, not null]
+  healthcheck_id int [null, ref: > healthcheck.id]
+  user_id int [null, ref: > user.id]
+  uniqueLink varchar(255) [null]
+  isUsed tinyint(1) [default: 0, not null]
+  expiresAt timestamp [not null, default: `current_timestamp()`]
+  version_id int [null, ref: > healthcheck_version.version_id]
+  squad_id int [null, ref: > squad.id] // Toegevoegd
+}
+
+Table question {
+  id int [pk, not null]
+  healthcheck_id int [null, ref: > healthcheck.id]
+  category_id int [null, ref: > question_category.id]
+  priority int [default: 0, not null]
+  text text [null]
+  createdAt timestamp [not null, default: `current_timestamp()`]
+  version_id int [null, ref: > healthcheck_version.version_id]
+}
+
+Table healthcheck {
+  id int [pk, not null]
+  title varchar(255) [null]
+  description text [null]
+  manager_id int [null, ref: > user.id]
+  createdAt timestamp [not null, default: `current_timestamp()`]
+}
+
+Table healthcheck_version {
+  version_id int [pk, not null]
+  healthcheck_id int [null, ref: > healthcheck.id]
+  version_number int [null]
+  creation_date timestamp [not null, default: `current_timestamp()`]
+  notes text [null]
+  isActive tinyint(4) [default: 0, not null]
+}
+
+Table squad {
+  id int [pk, not null]
+  name varchar(255) [null]
+  createdAt timestamp [not null, default: `current_timestamp()`]
+}
+
+Table squad_member {
+  id int [pk, not null]
+  user_id int [null, ref: > user.id]
+  squad_id int [null, ref: > squad.id]
+}
+
+Table squad_healthcheck {
+  id int [pk, not null]
+  squad_id int [null, ref: > squad.id]
+  healthcheck_id int [null, ref: > healthcheck.id]
+}
+
+Table user {
+  id int [pk, not null]
+  email varchar(255) [not null]
+  name varchar(255) [null]
+  passwordHash varchar(255) [null]
+  role enum('Manager', 'Developer') [default: 'Developer', not null]
+  createdAt timestamp [not null, default: `current_timestamp()`]
+}
+
+Table question_category {
+  id int [pk, not null, increment]
+  name varchar(255) [null]
+}
